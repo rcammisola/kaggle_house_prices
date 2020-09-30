@@ -1,0 +1,9 @@
+-r requirements.txt
+-e .
+invoke
+pytest
+coverage
+coverage-badge
+pip-chill
+pylint
+black

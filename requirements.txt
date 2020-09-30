@@ -1,0 +1,14 @@
+jupyter==1.0.0
+jupyterlab==2.2.6
+matplotlib
+numpy
+pandas
+scikit-learn
+seaborn
+streamlit
+lightgbm==3.0.0
+missingno==0.4.2
+nbdime==2.0.0
+path==15.0.0
+plotly==4.10.0
+statsmodels==0.11.1

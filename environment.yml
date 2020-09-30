@@ -1,0 +1,7 @@
+name: kaggle_house_prices
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
