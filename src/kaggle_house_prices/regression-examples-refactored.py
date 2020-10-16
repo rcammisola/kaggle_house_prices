@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import logging
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +12,7 @@ from sklearn.metrics import mean_squared_error, make_scorer
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.preprocessing import StandardScaler
 
+from kaggle_house_prices.logs import configure_logging
 from kaggle_house_prices.data.make_dataset import load_training_dataset
 
 sns.set_context("poster")
@@ -66,14 +66,10 @@ def rmse_cv_test(model, X_test, y_test, scorer):
                                     scoring=scorer, cv=10))
 
 
-def configure_logging():
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-
-
 def main_method():
     configure_logging()
     train = load_training_dataset()
-    print(train.shape)
+    logging.info(train.shape)
 
     # Duplicates check
     check_for_duplicates(train)
@@ -386,14 +382,14 @@ def main_method():
     # #### Split numerical and categorical features
     categorical_features = train.select_dtypes(include=["object"]).columns
     numerical_features = train.select_dtypes(exclude=["object"]).columns.drop("SalePrice")
-    print(f"Numerical features: {len(numerical_features)}")
-    print(f"Categorical features: {len(categorical_features)}")
+    logging.info(f"Numerical features: {len(numerical_features)}")
+    logging.info(f"Categorical features: {len(categorical_features)}")
     train_num = train[numerical_features]
     train_cat = train[categorical_features]
     # Handle missing values in numerical features by using the median
-    print(f"Missing numerical values: {train_num.isnull().values.sum()}")
+    logging.info(f"Missing numerical values: {train_num.isnull().values.sum()}")
     train_num = train_num.fillna(train_num.median())
-    print(f"Remaining missing numerical values: {train_num.isnull().values.sum()}")
+    logging.info(f"Remaining missing numerical values: {train_num.isnull().values.sum()}")
     ## Log transform skewed numerical features to lessen impact of outliers
     # Inspired by Alexandru Papiu's script : https://www.kaggle.com/apapiu/house-prices-advanced-regression-techniques/regularized-linear-models
     # As a general rule of thumb, a skewness with an absolute value > 0.5 is considered at least moderately skewed
@@ -404,7 +400,7 @@ def main_method():
     ## One hot encode categorical variables
     train_cat = pd.get_dummies(train_cat)
     train = pd.concat([train_num, train_cat], axis=1)
-    print(f"Number of features: {train.shape[1]}")
+    logging.info(f"Number of features: {train.shape[1]}")
     # ## Modelling
     #
     # * Split dataset
@@ -424,10 +420,10 @@ def main_method():
         test_size=0.3,
         random_state=0
     )
-    print("X_train", str(X_train.shape))
-    print("X_test", str(X_test.shape))
-    print("y_train", str(y_train.shape))
-    print("y_test", str(y_test.shape))
+    logging.info("X_train", str(X_train.shape))
+    logging.info("X_test", str(X_test.shape))
+    logging.info("y_train", str(y_train.shape))
+    logging.info("y_test", str(y_test.shape))
     # Standard scale the features
     # Done after partitioning to avoid fitting scaler to observations in the test set
     # Should the scaler be pickled for deployment use cases then?
@@ -439,8 +435,8 @@ def main_method():
     # ## Linear regression without regularisation
     linear_regression = LinearRegression()
     linear_regression.fit(X_train, y_train)
-    print(f"RMSE on Training set: {rmse_cv_train(linear_regression).mean()}")
-    print(f"RMSE on Test set: {rmse_cv_test(linear_regression).mean()}")
+    logging.info(f"RMSE on Training set: {rmse_cv_train(linear_regression).mean()}")
+    logging.info(f"RMSE on Test set: {rmse_cv_test(linear_regression).mean()}")
     y_train_pred = linear_regression.predict(X_train)
     y_test_pred = linear_regression.predict(X_test)
     # Plot residuals
@@ -486,8 +482,8 @@ def main_method():
     )
     ridge_regression.fit(X_train, y_train)
     best_alpha = ridge_regression.alpha_
-    print(f"Best alpha {best_alpha}")
-    print("Re-fit with alphas around the best alpha")
+    logging.info(f"Best alpha {best_alpha}")
+    logging.info("Re-fit with alphas around the best alpha")
     ridge_regression = RidgeCV(
         alphas=[
             best_alpha * .6,
@@ -513,9 +509,9 @@ def main_method():
     )
     ridge_regression.fit(X_train, y_train)
     best_alpha = ridge_regression.alpha_
-    print(f"Best alpha {best_alpha}")
-    print(f"Ridge RMSE on Training set: {rmse_cv_train(ridge_regression).mean()}")
-    print(f"Ridge RMSE on Test set: {rmse_cv_test(ridge_regression).mean()}")
+    logging.info(f"Best alpha {best_alpha}")
+    logging.info(f"Ridge RMSE on Training set: {rmse_cv_train(ridge_regression).mean()}")
+    logging.info(f"Ridge RMSE on Test set: {rmse_cv_test(ridge_regression).mean()}")
     y_train_pred = ridge_regression.predict(X_train)
     y_test_pred = ridge_regression.predict(X_test)
     # Plot residuals
@@ -554,7 +550,7 @@ def main_method():
     plt.show()
     ## Plot important coefficients
     coefs = pd.Series(ridge_regression.coef_, index=X_train.columns)
-    print(f"Ridge picked {sum(coefs != 0)} features and eliminated the other {sum(coefs == 0)} features")
+    logging.info(f"Ridge picked {sum(coefs != 0)} features and eliminated the other {sum(coefs == 0)} features")
     important_coefficients = pd.concat([coefs.sort_values().head(10),
                                         coefs.sort_values().tail(10)])
     important_coefficients.plot(kind="barh")
@@ -582,8 +578,8 @@ def main_method():
     )
     lasso_regression.fit(X_train, y_train)
     best_alpha = lasso_regression.alpha_
-    print(f"Best alpha {best_alpha}")
-    print("Re-fit with alphas around the best alpha")
+    logging.info(f"Best alpha {best_alpha}")
+    logging.info("Re-fit with alphas around the best alpha")
     lasso_regression = LassoCV(
         alphas=[
             best_alpha * .6,
@@ -610,9 +606,9 @@ def main_method():
     )
     lasso_regression.fit(X_train, y_train)
     best_alpha = lasso_regression.alpha_
-    print(f"Best alpha {best_alpha}")
-    print(f"LASSO RMSE on Training set: {rmse_cv_train(lasso_regression).mean()}")
-    print(f"LASSO RMSE on Test set: {rmse_cv_test(lasso_regression).mean()}")
+    logging.info(f"Best alpha {best_alpha}")
+    logging.info(f"LASSO RMSE on Training set: {rmse_cv_train(lasso_regression).mean()}")
+    logging.info(f"LASSO RMSE on Test set: {rmse_cv_test(lasso_regression).mean()}")
     y_train_pred = lasso_regression.predict(X_train)
     y_test_pred = lasso_regression.predict(X_test)
     # Plot residuals
@@ -651,7 +647,7 @@ def main_method():
     plt.show()
     ## Plot important coefficients
     coefs = pd.Series(lasso_regression.coef_, index=X_train.columns)
-    print(f"LASSO picked {sum(coefs != 0)} features and eliminated the other {sum(coefs == 0)} features")
+    logging.info(f"LASSO picked {sum(coefs != 0)} features and eliminated the other {sum(coefs == 0)} features")
     important_coefficients = pd.concat([coefs.sort_values().head(10),
                                         coefs.sort_values().tail(10)])
     important_coefficients.plot(kind="barh")
@@ -669,9 +665,9 @@ def main_method():
     elastic_net_regression.fit(X_train, y_train)
     best_l1_ratio = elastic_net_regression.l1_ratio_
     best_alpha = elastic_net_regression.alpha_
-    print(f"Best L1 Ratio {best_l1_ratio}")
-    print(f"Best alpha {best_alpha}")
-    print("Re-fit with alphas around the best alpha")
+    logging.info(f"Best L1 Ratio {best_l1_ratio}")
+    logging.info(f"Best alpha {best_alpha}")
+    logging.info("Re-fit with alphas around the best alpha")
     elastic_net_regression = ElasticNetCV(
         l1_ratio=[
             best_l1_ratio * .85,
@@ -709,10 +705,10 @@ def main_method():
     elastic_net_regression.fit(X_train, y_train)
     best_l1_ratio = elastic_net_regression.l1_ratio_
     best_alpha = elastic_net_regression.alpha_
-    print(f"Best L1 Ratio {best_l1_ratio}")
-    print(f"Best alpha {best_alpha}")
-    print(f"ElasticNet RMSE on Training set: {rmse_cv_train(elastic_net_regression).mean()}")
-    print(f"ElasticNet RMSE on Test set: {rmse_cv_test(elastic_net_regression).mean()}")
+    logging.info(f"Best L1 Ratio {best_l1_ratio}")
+    logging.info(f"Best alpha {best_alpha}")
+    logging.info(f"ElasticNet RMSE on Training set: {rmse_cv_train(elastic_net_regression).mean()}")
+    logging.info(f"ElasticNet RMSE on Test set: {rmse_cv_test(elastic_net_regression).mean()}")
     y_train_pred = elastic_net_regression.predict(X_train)
     y_test_pred = elastic_net_regression.predict(X_test)
     # Plot residuals
@@ -751,7 +747,7 @@ def main_method():
     plt.show()
     ## Plot important coefficients
     coefs = pd.Series(elastic_net_regression.coef_, index=X_train.columns)
-    print(f"ElasticNET picked {sum(coefs != 0)} features and eliminated the other {sum(coefs == 0)} features")
+    logging.info(f"ElasticNET picked {sum(coefs != 0)} features and eliminated the other {sum(coefs == 0)} features")
     important_coefficients = pd.concat([coefs.sort_values().head(10),
                                         coefs.sort_values().tail(10)])
     important_coefficients.plot(kind="barh")
@@ -763,7 +759,7 @@ def check_for_duplicates(train):
     ids_unique = len(set(train.Id))
     ids_total = train.shape[0]
     duplicate_id_count = ids_total - ids_unique
-    print(f"There are {duplicate_id_count} duplicate IDs out of {ids_total} entries")
+    logging.info(f"There are {duplicate_id_count} duplicate IDs out of {ids_total} entries")
 
 
 if __name__ == '__main__':
