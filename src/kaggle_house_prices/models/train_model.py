@@ -23,10 +23,10 @@ def log_transform_sale_price(df):
     return df
 
 
-def rmse_cv_train(model, X_train, y_train, scorer):
+def rmse_cv_score(model, feature_values, target_values, scorer):
     return np.sqrt(-cross_val_score(model,
-                                    X_train,
-                                    y_train,
+                                    feature_values,
+                                    target_values,
                                     scoring=scorer, cv=10))
 
 
@@ -59,8 +59,8 @@ if __name__ == "__main__":
 
         # assess vs training and test set
         scorer = make_scorer(mean_squared_error, greater_is_better=False)
-        training_rmse = rmse_cv_train(model, X_train, y_train, scorer).mean()
-        test_rmse = rmse_cv_train(model, X_test, y_test, scorer).mean()
+        training_rmse = rmse_cv_score(model, X_train, y_train, scorer).mean()
+        test_rmse = rmse_cv_score(model, X_test, y_test, scorer).mean()
 
         logging.info(f"RMSE on Training set: {training_rmse}")
         logging.info(f"RMSE on Test set: {test_rmse}")
