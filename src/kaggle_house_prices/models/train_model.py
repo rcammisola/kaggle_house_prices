@@ -66,24 +66,29 @@ class PredictionPlot:
         self.test_colour = test_colour
         self.plot_title = title
 
-    def plot(self, training_predictions, training_actual, test_predictions, test_actual):
-        plt.scatter(training_predictions,
-                    training_actual,
-                    c=self.training_colour,
-                    marker="s",
-                    label="Training data")
-        plt.scatter(test_predictions,
-                    test_actual,
-                    c=self.test_colour,
-                    marker="s",
-                    label="Validation")
-        plt.title(self.plot_title)
-        plt.xlabel("Predicted Values")
-        plt.ylabel("Real Values")
-        plt.legend(loc="upper left")
-        plt.plot([10.5, 13.5], [10.5, 13.5], c="red")
+        self.fig, self.ax = plt.subplots(1, 1)
 
-        return plt.gca()
+    def plot(self, training_predictions, training_actual, test_predictions, test_actual):
+        self.ax.scatter(training_predictions,
+                        training_actual,
+                        c=self.training_colour,
+                        marker="s",
+                        label="Training data")
+        self.ax.scatter(test_predictions,
+                        test_actual,
+                        c=self.test_colour,
+                        marker="s",
+                        label="Validation")
+        self.ax.set_title(self.plot_title)
+        self.ax.set_xlabel("Predicted Values")
+        self.ax.set_ylabel("Real Values")
+        self.ax.legend(loc="upper left")
+        self.ax.plot([10.5, 13.5], [10.5, 13.5], c="red")
+
+        return self.ax
+
+    def save(self, file_path):
+        self.fig.savefig(file_path)
 
 
 if __name__ == "__main__":
@@ -154,16 +159,14 @@ if __name__ == "__main__":
 
         # Plot predictions
         predicted_plot = PredictionPlot(title="Linear Regression")
-        ax = predicted_plot.plot(y_training_predictions, y_train, y_test_predictions, y_test)
-
-        predictions_path = "./reports/figures/baseline/baseline_linear_regression_predictions.png"
-        plt.savefig(predictions_path)
-        mlflow.log_artifact(predictions_path)
+        predicted_plot.plot(y_training_predictions, y_train, y_test_predictions, y_test)
         plt.show()
 
+        predictions_path = "./reports/figures/baseline/baseline_linear_regression_predictions.png"
+        predicted_plot.save(predictions_path)
+        mlflow.log_artifact(predictions_path)
+
         model_path = "models/baseline/baseline_model.pickle"
-        with open(model_path, "wb") as model_file:
-            pickle.dump(model, model_file)
+        model.save(model_path)
 
         mlflow.log_artifact(model_path)
-
