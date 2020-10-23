@@ -68,7 +68,7 @@ class PredictionPlot:
 
         self.fig, self.ax = plt.subplots(1, 1)
 
-    def plot(self, training_predictions, training_actual, test_predictions, test_actual):
+    def plot(self, training_predictions, test_predictions, training_actual, test_actual):
         self.ax.scatter(training_predictions,
                         training_actual,
                         c=self.training_colour,
@@ -91,19 +91,31 @@ class PredictionPlot:
         self.fig.savefig(file_path)
 
 
-if __name__ == "__main__":
-    configure_logging()
+def plot_residuals(training_predictions, test_predictions, training_actual, test_actual):
+    plt.scatter(training_predictions,
+                training_predictions - training_actual,
+                c="blue",
+                marker="s",
+                label="Training data")
+    plt.scatter(test_predictions,
+                test_predictions - test_actual,
+                c="lightgreen",
+                marker="s",
+                label="Validation data")
+    plt.title("Linear Regression")
+    plt.xlabel("Predicted Values")
+    plt.ylabel("Residuals")
+    plt.legend(loc="upper left")
+    plt.hlines(y=0, xmin=10.5, xmax=13.5, color="red")
 
-    model = ModelDefinition()
 
-    # Load data
+def preprocessing_pipeline(model_definition):
     train_df = (load_training_dataset()
                 .pipe(log_transform_sale_price))
 
-    y = train_df[model.target_variable()]
-    train_df = train_df[model.input_feature_names()]
+    y = train_df[model_definition.target_variable()]
+    train_df = train_df[model_definition.input_feature_names()]
 
-    # train/test split
     X_train, X_test, y_train, y_test = train_test_split(
         train_df,
         y,
@@ -111,62 +123,44 @@ if __name__ == "__main__":
         random_state=0
     )
 
-    with mlflow.start_run(run_name="baseline") as run:
-        mlflow.log_params({
-            "Features": model.input_feature_names(),
-            "Training set size": X_train.shape[0],
-            "Test set size": X_test.shape[0]
-        })
+    return X_train, X_test, y_train, y_test
 
-        model.fit(X_train, y_train)
 
-        # assess vs training and test set
-        training_rmse = model.score(X_train, y_train)
-        test_rmse = model.score(X_test, y_test)
+def train_model(model, X_train, X_test, y_train, y_test):
+    model.fit(X_train, y_train)
 
-        logging.info(f"RMSE on Training set: {training_rmse}")
-        logging.info(f"RMSE on Test set: {test_rmse}")
+    # assess vs training and test set
+    training_rmse = model.score(X_train, y_train)
+    logging.info(f"RMSE on Training set: {training_rmse}")
 
-        mlflow.log_metrics({
-            "training_rmse": training_rmse,
-            "test_rmse": test_rmse,
-        })
+    test_rmse = model.score(X_test, y_test)
+    logging.info(f"RMSE on Test set: {test_rmse}")
 
-        # diagnostic plots
-        y_training_predictions = model.predict(X_train)
-        y_test_predictions = model.predict(X_test)
+    # diagnostic plots
+    y_training_predictions = model.predict(X_train)
+    y_test_predictions = model.predict(X_test)
 
-        # Plot residuals
-        plt.scatter(y_training_predictions,
-                    y_training_predictions - y_train,
-                    c="blue",
-                    marker="s",
-                    label="Training data")
-        plt.scatter(y_test_predictions,
-                    y_test_predictions - y_test,
-                    c="lightgreen",
-                    marker="s",
-                    label="Validation data")
-        plt.title("Linear Regression")
-        plt.xlabel("Predicted Values")
-        plt.ylabel("Residuals")
-        plt.legend(loc="upper left")
-        plt.hlines(y=0, xmin=10.5, xmax=13.5, color="red")
-        residuals_path = "./reports/figures/baseline/baseline_linear_regression_residuals.png"
-        plt.savefig(residuals_path)
-        mlflow.log_artifact(residuals_path)
-        plt.show()
+    # Plot residuals
+    plot_residuals(y_training_predictions, y_test_predictions, y_train, y_test)
+    residuals_path = "./reports/figures/baseline/baseline_linear_regression_residuals.png"
+    plt.savefig(residuals_path)
 
-        # Plot predictions
-        predicted_plot = PredictionPlot(title="Linear Regression")
-        predicted_plot.plot(y_training_predictions, y_train, y_test_predictions, y_test)
-        plt.show()
+    # Plot predictions vs actual
+    predicted_plot = PredictionPlot(title="Linear Regression")
+    predicted_plot.plot(y_training_predictions, y_test_predictions, y_train, y_test)
 
-        predictions_path = "./reports/figures/baseline/baseline_linear_regression_predictions.png"
-        predicted_plot.save(predictions_path)
-        mlflow.log_artifact(predictions_path)
+    predictions_path = "./reports/figures/baseline/baseline_linear_regression_predictions.png"
+    predicted_plot.save(predictions_path)
 
-        model_path = "models/baseline/baseline_model.pickle"
-        model.save(model_path)
+    model_path = "models/baseline/baseline_model.pickle"
+    model.save(model_path)
 
-        mlflow.log_artifact(model_path)
+
+if __name__ == "__main__":
+    configure_logging()
+
+    model = ModelDefinition()
+
+    X_train, X_test, y_train, y_test = preprocessing_pipeline(model)
+
+    train_model(model, X_train, X_test, y_train, y_test)
