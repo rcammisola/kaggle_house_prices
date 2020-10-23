@@ -1,61 +1,17 @@
-"""
-Train Baseline Linear Regression model using just GrLivArea
-"""
-
 import logging
-import pickle
 
 import matplotlib.pyplot as plt
-import mlflow
 import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, make_scorer
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import train_test_split
 
 from kaggle_house_prices.data.make_dataset import load_training_dataset
 from kaggle_house_prices.logs import configure_logging
-
-mlflow.set_experiment("kaggle_house_prices")
+from kaggle_house_prices.models.baseline_model import ModelDefinition
 
 
 def log_transform_sale_price(df):
     df.SalePrice = np.log1p(df.SalePrice)
     return df
-
-
-def rmse_cv_score(model, feature_values, target_values, scorer):
-    return np.sqrt(-cross_val_score(model,
-                                    feature_values,
-                                    target_values,
-                                    scoring=scorer, cv=10))
-
-
-class ModelDefinition:
-    def __init__(self):
-        self.estimator = LinearRegression()
-        self.model = None
-        self.target = "SalePrice"
-        self.input_feature_columns = ["GrLivArea"]
-
-    def target_variable(self):
-        return self.target
-
-    def input_feature_names(self):
-        return self.input_feature_columns
-
-    def fit(self, input_features, y):
-        self.model = self.estimator.fit(input_features, y)
-
-    def predict(self, input_features):
-        return self.model.predict(input_features)
-
-    def score(self, input_features, target_values):
-        scorer = make_scorer(mean_squared_error, greater_is_better=False)
-        return rmse_cv_score(self.model, input_features, target_values, scorer).mean()
-
-    def save(self, model_filename):
-        with open(model_filename, "wb") as model_file_pointer:
-            pickle.dump(self.model, model_file_pointer)
 
 
 class PredictionPlot:
