@@ -35,6 +35,7 @@ class PredictionPlot:
 
 
 def plot_residuals(training_predictions, test_predictions, training_actual, test_actual):
+    fig, ax = plt.subplots(1, 1)
     plt.scatter(training_predictions,
                 training_predictions - training_actual,
                 c="blue",
