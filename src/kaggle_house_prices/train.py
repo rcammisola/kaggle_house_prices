@@ -1,6 +1,7 @@
 import logging
 
 import matplotlib.pyplot as plt
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 import kaggle_house_prices.features.filter as feature_filter
@@ -75,6 +76,38 @@ def train_basic_model_with_outlier_removal(model, dataset, preprocessing_pipelin
     model.save(model_path)
 
 
+def train_basic_model_with_all_features(model, dataset, preprocessing_pipeline):
+    X_train, X_test, y_train, y_test = preprocessing_pipeline(dataset)
+
+    model.fit(X_train, y_train)
+
+    # assess vs training and test set
+    training_rmse = model.score(X_train, y_train)
+    logging.info(f"RMSE on Training set: {training_rmse}")
+
+    test_rmse = model.score(X_test, y_test)
+    logging.info(f"RMSE on Test set: {test_rmse}")
+
+    # diagnostic plots
+    y_training_predictions = model.predict(X_train)
+    y_test_predictions = model.predict(X_test)
+
+    # Plot residuals
+    plot_residuals(y_training_predictions, y_test_predictions, y_train, y_test)
+    residuals_path = "./reports/figures/all_features_no_null/residuals.png"
+    plt.savefig(residuals_path)
+
+    # Plot predictions vs actual
+    predicted_plot = PredictionPlot(title="Linear Regression (all features v1)")
+    predicted_plot.plot(y_training_predictions, y_test_predictions, y_train, y_test)
+
+    predictions_path = "./reports/figures/all_features_no_null/predictions_vs_actuals.png"
+    predicted_plot.save(predictions_path)
+
+    model_path = "models/all_features_no_null/model.pickle"
+    model.save(model_path)
+
+
 def preprocessing_pipeline_no_outliers(df):
     train_df = (df
                 .copy()
@@ -108,6 +141,36 @@ def preprocessing_pipeline_baseline(df):
     return X_test, X_train, y_test, y_train
 
 
+def preprocessing_pipeline_handle_nulls(df):
+    train_df = (df
+                .copy()
+                .pipe(transform.log_transform_sale_price)
+                .pipe(transform.fill_null_values)
+                .pipe(feature_filter.filter_large_house_outliers)
+                .pipe(feature_filter.drop_id_column))
+
+    y = train_df["SalePrice"]
+
+    categorical_features = train_df.select_dtypes(include=["object"]).columns
+    numerical_features = train_df.select_dtypes(exclude=["object"]).columns.drop("SalePrice")
+
+    train_num = train_df[numerical_features]
+    train_cat = train_df[categorical_features]
+
+    # One hot encode categorical variables
+    train_cat = pd.get_dummies(train_cat)
+
+    train_df = pd.concat([train_num, train_cat], axis=1)
+    X_train, X_test, y_train, y_test = train_test_split(
+        train_df,
+        y,
+        test_size=0.3,
+        random_state=0
+    )
+
+    return X_test, X_train, y_test, y_train
+
+
 if __name__ == "__main__":
     configure_logging()
 
@@ -120,3 +183,6 @@ if __name__ == "__main__":
 
     logging.info("Outlier removed model")
     train_basic_model_with_outlier_removal(model, dataset, preprocessing_pipeline_no_outliers)
+
+    logging.info("Linear regression with all columns")
+    train_basic_model_with_all_features(model, dataset, preprocessing_pipeline_handle_nulls)
