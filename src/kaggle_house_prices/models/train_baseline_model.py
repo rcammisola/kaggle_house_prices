@@ -25,37 +25,52 @@ def rmse_cv_score(model, feature_values, target_values, scorer):
                                     scoring=scorer, cv=10))
 
 
-def train_basic_model(dataset, preprocessing_pipeline):
+def training_process(dataset, preprocessing_pipeline):
+    model_name = "baseline"
+
     X_train, X_test, y_train, y_test = preprocessing_pipeline(dataset)
 
-    model = LinearRegression()
-    model.fit(X_train, y_train)
+    model = fit_model(X_train, y_train)
 
-    # assess vs training and test set
-    scorer = make_scorer(mean_squared_error, greater_is_better=False)
-    training_rmse =  rmse_cv_score(model, X_train, y_train, scorer).mean()
-    logging.info(f"RMSE on Training set: {training_rmse}")
+    evaluation_metrics(X_test, X_train, model, y_test, y_train)
 
-    test_rmse = rmse_cv_score(model, X_test, y_test, scorer).mean()
-    logging.info(f"RMSE on Test set: {test_rmse}")
-
-    # diagnostic plots
     y_training_predictions = model.predict(X_train)
     y_test_predictions = model.predict(X_test)
 
+    evaluation_plots(model_name, y_test, y_test_predictions, y_train, y_training_predictions)
+
+    save_model(model, model_name)
+
+
+def fit_model(X_train, y_train):
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    return model
+
+
+def evaluation_metrics(X_test, X_train, model, y_test, y_train):
+    # assess vs training and test set
+    scorer = make_scorer(mean_squared_error, greater_is_better=False)
+    training_rmse = rmse_cv_score(model, X_train, y_train, scorer).mean()
+    logging.info(f"RMSE on Training set: {training_rmse}")
+    test_rmse = rmse_cv_score(model, X_test, y_test, scorer).mean()
+    logging.info(f"RMSE on Test set: {test_rmse}")
+
+
+def evaluation_plots(model_name, y_test, y_test_predictions, y_train, y_training_predictions):
     # Plot residuals
     plot_residuals(y_training_predictions, y_test_predictions, y_train, y_test)
-    residuals_path = "./reports/figures/baseline/residuals.png"
+    residuals_path = f"./reports/figures/{model_name}/residuals.png"
     plt.savefig(residuals_path)
-
     # Plot predictions vs actual
-    predicted_plot = PredictionPlot(title="Linear Regression (baseline)")
+    predicted_plot = PredictionPlot(title=f"Linear Regression ({model_name})")
     predicted_plot.plot(y_training_predictions, y_test_predictions, y_train, y_test)
-
-    predictions_path = "./reports/figures/baseline/predictions_vs_actuals.png"
+    predictions_path = f"./reports/figures/{model_name}/predictions_vs_actuals.png"
     predicted_plot.save(predictions_path)
 
-    model_path = "models/baseline/model.pickle"
+
+def save_model(model, model_name):
+    model_path = f"models/{model_name}/model.pickle"
     with open(model_path, "wb") as model_file_pointer:
         pickle.dump(model, model_file_pointer)
 
@@ -82,4 +97,4 @@ if __name__ == "__main__":
     dataset = load_training_dataset()
 
     logging.info("Baseline model")
-    train_basic_model(dataset, preprocessing_pipeline_baseline)
+    training_process(dataset, preprocessing_pipeline_baseline)
