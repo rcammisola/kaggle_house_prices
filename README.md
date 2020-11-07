@@ -125,6 +125,10 @@ You will find the definition of each task inside the `tasks.py` file, so you can
 _PS : we don't use Makefile because some people work on Windows workstations and the
 install of make is cumbersome on those._
 
+# TODO list
+
+[] Remove features/build_features from cookiecutter
+
 # Project organization
 
     ├── tasks.py           <- Invoke with commands like `notebook`
