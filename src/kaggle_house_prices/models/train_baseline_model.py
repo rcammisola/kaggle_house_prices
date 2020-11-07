@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 from kaggle_house_prices.data.make_dataset import load_training_dataset
 from kaggle_house_prices.features.pipelines import preprocessing_pipeline_baseline
 from kaggle_house_prices.logs import configure_logging
+from kaggle_house_prices.models.storage import save_model
 from kaggle_house_prices.visualization.diagnostic import PredictionPlot, plot_residuals
-
-
-import pickle
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -65,12 +63,6 @@ def evaluation_plots(model_name, y_test, y_test_predictions, y_train, y_training
     predicted_plot.plot(y_training_predictions, y_test_predictions, y_train, y_test)
     predictions_path = f"./reports/figures/{model_name}/predictions_vs_actuals.png"
     predicted_plot.save(predictions_path)
-
-
-def save_model(model, model_name):
-    model_path = f"models/{model_name}/model.pickle"
-    with open(model_path, "wb") as model_file_pointer:
-        pickle.dump(model, model_file_pointer)
 
 
 if __name__ == "__main__":
