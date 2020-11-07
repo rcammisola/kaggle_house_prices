@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 from scipy.stats import skew
 
@@ -364,3 +365,7 @@ def log_transform_skewed_numerical_variables(train_num):
     skewed_features = skewness.index
     train_num[skewed_features] = np.log1p(train_num[skewed_features])
     return train_num
+
+
+def one_hot_encode_categoricals(train_cat):
+    return pd.get_dummies(train_cat)
