@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import skew
 
 
 def log_transform_sale_price(df):
@@ -180,3 +181,186 @@ def encode_categoricals_as_ordinal_features(df):
         "Street": {"Grvl": 1, "Pave": 2},
         "Utilities": {"ELO": 1, "NoSeWa": 2, "NoSewr": 3, "AllPub": 4}
     })
+
+
+def discrete_categorical_transformation(df):
+    # Simplifications of existing features
+    df["SimplOverallQual"] = df.OverallQual.replace({
+        1: 1, 2: 1, 3: 1,
+        4: 2, 5: 2, 6: 2,
+        7: 3, 8: 3, 9: 3, 10: 3,
+    })
+
+    df["SimplOverallCond"] = df.OverallCond.replace({
+        # Bad
+        1: 1, 2: 1, 3: 1,
+        # Average
+        4: 2, 5: 2, 6: 2,
+        # Good
+        7: 3, 8: 3, 9: 3, 10: 3,
+    })
+
+    df["SimplPoolQC"] = df.PoolQC.replace({
+        1: 1, 2: 1,
+        3: 2, 4: 2,
+    })
+
+    df["SimplGarageCond"] = df.GarageCond.replace({
+        1: 1, 2: 1, 3: 1,
+        4: 2, 5: 2,
+    })
+
+    df["SimplGarageQual"] = df.GarageQual.replace({1: 1,  # bad
+                                                   2: 1, 3: 1,  # average
+                                                   4: 2, 5: 2  # good
+                                                   })
+    df["SimplFireplaceQu"] = df.FireplaceQu.replace({1: 1,  # bad
+                                                     2: 1, 3: 1,  # average
+                                                     4: 2, 5: 2  # good
+                                                     })
+    df["SimplFireplaceQu"] = df.FireplaceQu.replace({1: 1,  # bad
+                                                     2: 1, 3: 1,  # average
+                                                     4: 2, 5: 2  # good
+                                                     })
+    df["SimplFunctional"] = df.Functional.replace({1: 1, 2: 1,  # bad
+                                                   3: 2, 4: 2,  # major
+                                                   5: 3, 6: 3, 7: 3,  # minor
+                                                   8: 4  # typical
+                                                   })
+    df["SimplKitchenQual"] = df.KitchenQual.replace({1: 1,  # bad
+                                                     2: 1, 3: 1,  # average
+                                                     4: 2, 5: 2  # good
+                                                     })
+    df["SimplHeatingQC"] = df.HeatingQC.replace({1: 1,  # bad
+                                                 2: 1, 3: 1,  # average
+                                                 4: 2, 5: 2  # good
+                                                 })
+    df["SimplBsmtFinType1"] = df.BsmtFinType1.replace({1: 1,  # unfinished
+                                                       2: 1, 3: 1,  # rec room
+                                                       4: 2, 5: 2, 6: 2  # living quarters
+                                                       })
+    df["SimplBsmtFinType2"] = df.BsmtFinType2.replace({1: 1,  # unfinished
+                                                       2: 1, 3: 1,  # rec room
+                                                       4: 2, 5: 2, 6: 2  # living quarters
+                                                       })
+    df["SimplBsmtCond"] = df.BsmtCond.replace({1: 1,  # bad
+                                               2: 1, 3: 1,  # average
+                                               4: 2, 5: 2  # good
+                                               })
+    df["SimplBsmtQual"] = df.BsmtQual.replace({1: 1,  # bad
+                                               2: 1, 3: 1,  # average
+                                               4: 2, 5: 2  # good
+                                               })
+    df["SimplExterCond"] = df.ExterCond.replace({1: 1,  # bad
+                                                 2: 1, 3: 1,  # average
+                                                 4: 2, 5: 2  # good
+                                                 })
+    df["SimplExterQual"] = df.ExterQual.replace({1: 1,  # bad
+                                                 2: 1, 3: 1,  # average
+                                                 4: 2, 5: 2  # good
+                                                 })
+
+    return df
+
+
+def add_interaction_variables(df):
+    # Combinations of existing features
+    # Overall quality of the house
+    df["OverallGrade"] = df["OverallQual"] * df["OverallCond"]
+    # Overall quality of the garage
+    df["GarageGrade"] = df["GarageQual"] * df["GarageCond"]
+    # Overall quality of the exterior
+    df["ExterGrade"] = df["ExterQual"] * df["ExterCond"]
+    # Overall kitchen score
+    df["KitchenScore"] = df["KitchenAbvGr"] * df["KitchenQual"]
+    # Overall fireplace score
+    df["FireplaceScore"] = df["Fireplaces"] * df["FireplaceQu"]
+    # Overall garage score
+    df["GarageScore"] = df["GarageArea"] * df["GarageQual"]
+    # Overall pool score
+    df["PoolScore"] = df["PoolArea"] * df["PoolQC"]
+    # Simplified overall quality of the house
+    df["SimplOverallGrade"] = df["SimplOverallQual"] * df["SimplOverallCond"]
+    # Simplified overall quality of the exterior
+    df["SimplExterGrade"] = df["SimplExterQual"] * df["SimplExterCond"]
+    # Simplified overall pool score
+    df["SimplPoolScore"] = df["PoolArea"] * df["SimplPoolQC"]
+    # Simplified overall garage score
+    df["SimplGarageScore"] = df["GarageArea"] * df["SimplGarageQual"]
+    # Simplified overall fireplace score
+    df["SimplFireplaceScore"] = df["Fireplaces"] * df["SimplFireplaceQu"]
+    # Simplified overall kitchen score
+    df["SimplKitchenScore"] = df["KitchenAbvGr"] * df["SimplKitchenQual"]
+
+    return df
+
+
+def add_total_bathrooms(df):
+    df["TotalBath"] = df["BsmtFullBath"] + \
+                      (0.5 * df["BsmtHalfBath"]) + \
+                      df["FullBath"] + \
+                      (0.5 * df["HalfBath"])
+    return df
+
+
+def add_total_square_foot(df):
+    df["AllSF"] = df["GrLivArea"] + df["TotalBsmtSF"]
+    return df
+
+
+def add_total_square_foot_above_ground(df):
+    df["AllFlrsSF"] = df["1stFlrSF"] + df["2ndFlrSF"]
+    return df
+
+
+def add_total_porch_size(df):
+    df["AllPorchSF"] = df["OpenPorchSF"] + df["EnclosedPorch"] + \
+                       df["3SsnPorch"] + df["ScreenPorch"]
+    return df
+
+
+def add_has_masonry_veneer(df):
+    df["HasMasVnr"] = df.MasVnrType.replace({"BrkCmn": 1, "BrkFace": 1, "CBlock": 1,
+                                             "Stone": 1, "None": 0})
+    return df
+
+
+def add_if_house_bought_before_completed_build(df):
+    df["BoughtOffPlan"] = df.SaleCondition.replace({"Abnorml": 0, "Alloca": 0, "AdjLand": 0,
+                                                    "Family": 0, "Normal": 0, "Partial": 1})
+    return df
+
+
+def add_polynomials_for_top_10_correlated(df):
+    feature_correlations = df.corr()
+    top_10_price_correlated_features = (feature_correlations
+                                        .sort_values(by="SalePrice", ascending=False)
+                                        .SalePrice
+                                        .head(11))
+
+    for col in list(top_10_price_correlated_features.index):
+        if col == "SalePrice":
+            continue
+
+        df[f"{col}-s2"] = df[col] ** 2
+        df[f"{col}-s3"] = df[col] ** 3
+        df[f"{col}-sq"] = np.sqrt(df[col])
+
+    return df
+
+
+def log_transform_skewed_numerical_variables(train_num):
+    """
+    Log transform skewed numerical features to lessen impact of outliers
+
+    Inspired by Alexandru Papiu's script:
+    https://www.kaggle.com/apapiu/house-prices-advanced-regression-techniques/regularized-linear-models
+    As a general rule of thumb, a skewness with an absolute value > 0.5 is considered at least moderately skewed
+    """
+
+    skewness = train_num.apply(lambda x: skew(x))
+    skewness = skewness[abs(skewness) > 0.5]
+
+    skewed_features = skewness.index
+    train_num[skewed_features] = np.log1p(train_num[skewed_features])
+    return train_num
