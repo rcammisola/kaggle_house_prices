@@ -1,11 +1,9 @@
 import logging
 
 import matplotlib.pyplot as plt
-import pandas as pd
-from sklearn.model_selection import train_test_split
 
-import kaggle_house_prices.features.transform as transform
 from kaggle_house_prices.data.make_dataset import load_training_dataset
+from kaggle_house_prices.features.pipelines import preprocessing_pipeline_baseline
 from kaggle_house_prices.logs import configure_logging
 from kaggle_house_prices.visualization.diagnostic import PredictionPlot, plot_residuals
 
@@ -73,22 +71,6 @@ def save_model(model, model_name):
     model_path = f"models/{model_name}/model.pickle"
     with open(model_path, "wb") as model_file_pointer:
         pickle.dump(model, model_file_pointer)
-
-
-def preprocessing_pipeline_baseline(df):
-    train_df = (df
-                .copy()
-                .pipe(transform.log_transform_sale_price))
-
-    y = train_df["SalePrice"]
-    train_df = train_df[["GrLivArea"]]
-    X_train, X_test, y_train, y_test = train_test_split(
-        train_df,
-        y,
-        test_size=0.3,
-        random_state=0
-    )
-    return X_test, X_train, y_test, y_train
 
 
 if __name__ == "__main__":

@@ -4,6 +4,11 @@
 
 Working through the kaggle house prices playground competition to learn about ML
 
+# TODO list
+
+[] Remove features/build_features from cookiecutter
+[] Add column names constants
+
 ## Prerequisites
 
 - [Anaconda](https://www.anaconda.com/download/) >=5.x
@@ -124,10 +129,6 @@ You will find the definition of each task inside the `tasks.py` file, so you can
 
 _PS : we don't use Makefile because some people work on Windows workstations and the
 install of make is cumbersome on those._
-
-# TODO list
-
-[] Remove features/build_features from cookiecutter
 
 # Project organization
 

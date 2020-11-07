@@ -1,12 +1,9 @@
 import logging
 
 import matplotlib.pyplot as plt
-import pandas as pd
-from sklearn.model_selection import train_test_split
 
-import kaggle_house_prices.features.filter as feature_filter
-import kaggle_house_prices.features.transform as transform
 from kaggle_house_prices.data.make_dataset import load_training_dataset
+from kaggle_house_prices.features.pipelines import preprocessing_pipeline_handle_nulls
 from kaggle_house_prices.logs import configure_logging
 from kaggle_house_prices.visualization.diagnostic import PredictionPlot, plot_residuals
 
@@ -59,36 +56,6 @@ def train_basic_model(dataset, preprocessing_pipeline):
     model_path = "models/all_features_no_null/model.pickle"
     with open(model_path, "wb") as model_file_pointer:
         pickle.dump(model, model_file_pointer)
-
-
-def preprocessing_pipeline_handle_nulls(df):
-    train_df = (df
-                .copy()
-                .pipe(transform.log_transform_sale_price)
-                .pipe(transform.fill_null_values)
-                .pipe(feature_filter.filter_large_house_outliers)
-                .pipe(feature_filter.drop_id_column))
-
-    y = train_df["SalePrice"]
-
-    categorical_features = train_df.select_dtypes(include=["object"]).columns
-    numerical_features = train_df.select_dtypes(exclude=["object"]).columns.drop("SalePrice")
-
-    train_num = train_df[numerical_features]
-    train_cat = train_df[categorical_features]
-
-    # One hot encode categorical variables
-    train_cat = pd.get_dummies(train_cat)
-
-    train_df = pd.concat([train_num, train_cat], axis=1)
-    X_train, X_test, y_train, y_test = train_test_split(
-        train_df,
-        y,
-        test_size=0.3,
-        random_state=0
-    )
-
-    return X_test, X_train, y_test, y_train
 
 
 if __name__ == "__main__":
