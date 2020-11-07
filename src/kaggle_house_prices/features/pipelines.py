@@ -11,6 +11,10 @@ def preprocessing_pipeline_baseline(df):
 
     y = train_df["SalePrice"]
     train_df = train_df[["GrLivArea"]]
+    return split_dataset(train_df, y)
+
+
+def split_dataset(train_df, y):
     X_train, X_test, y_train, y_test = train_test_split(
         train_df,
         y,
@@ -28,13 +32,7 @@ def preprocessing_pipeline_no_outliers(df):
 
     y = train_df["SalePrice"]
     train_df = train_df[["GrLivArea"]]
-    X_train, X_test, y_train, y_test = train_test_split(
-        train_df,
-        y,
-        test_size=0.3,
-        random_state=0
-    )
-    return X_test, X_train, y_test, y_train
+    return split_dataset(train_df, y)
 
 
 def preprocessing_pipeline_handle_nulls(df):
@@ -57,11 +55,4 @@ def preprocessing_pipeline_handle_nulls(df):
     train_cat = pd.get_dummies(train_cat)
 
     train_df = pd.concat([train_num, train_cat], axis=1)
-    X_train, X_test, y_train, y_test = train_test_split(
-        train_df,
-        y,
-        test_size=0.3,
-        random_state=0
-    )
-
-    return X_test, X_train, y_test, y_train
+    return split_dataset(train_df, y)
