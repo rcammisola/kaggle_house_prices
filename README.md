@@ -6,8 +6,35 @@ Working through the kaggle house prices playground competition to learn about ML
 
 # TODO list
 
-[] Remove features/build_features from cookiecutter
+## Project
+
+[] Work through pipelines talk: https://www.youtube.com/watch?v=XpOBSaktb6s&list=PL_pVmAaAnxIRnSw6wiCpSvshFyCREZmlM&index=5
+[] Add linear regression model with full feature processing pipeline
+[] Create a way to put a kaggle submission together from a model
+[] Decide on full evaluation metrics and plots to use (can I use yellowbrick?)
+[] Add MLFlow instrumentation and logging
+[] Add regularised models
+    * LASSO
+    * Ridge
+    * ElasticNET
+[] Abstract configuration for models
+[] Provide a way to select model via command line parameter
+[] Abstract pipeline stages?
+    * Data load
+    * Pre-processing / feature engineering
+        * pre-split feature processing
+        * split
+        * post-split processing (scaling etc)
+    * Model fit/training
+    * Store
+    * Evaluation
+[] Add tests for feature processing
 [] Add column names constants
+
+
+## Cookiecutter todo
+
+[] Remove features/build_features
 
 ## Prerequisites
 
