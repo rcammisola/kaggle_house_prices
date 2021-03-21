@@ -8,7 +8,9 @@ Working through the kaggle house prices playground competition to learn about ML
 
 ## Project
 
-[] Work through pipelines talk: https://www.youtube.com/watch?v=XpOBSaktb6s&list=PL_pVmAaAnxIRnSw6wiCpSvshFyCREZmlM&index=5
+[x] Work through pipelines talk: https://www.youtube.com/watch?v=XpOBSaktb6s&list=PL_pVmAaAnxIRnSw6wiCpSvshFyCREZmlM&index=5
+[] Understand how transformers/estimators can be used to add a feature in an sklearn pipeline
+[] How to get the best result from GridSearchCV
 [] Add linear regression model with full feature processing pipeline
 [] Create a way to put a kaggle submission together from a model
 [] Decide on full evaluation metrics and plots to use (can I use yellowbrick?)
